@@ -1,0 +1,48 @@
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Mock In-Memory Database for posts and nested comments
+let posts = [
+    {
+        id: 1,
+        title: "Getting Started with Full-Stack Development",
+        content: "Full-stack development involves building both the frontend UI and the backend database server logic...",
+        comments: ["Great starter explanation!", "Super helpful for my project."]
+    }
+];
+
+// 1. GET: Fetch all blog posts
+app.get('/api/posts', (req, res) => {
+    res.json(posts);
+});
+
+// 2. POST: Create a new blog post
+app.post('/api/posts', (req, res) => {
+    const { title, content } = req.body;
+    if (!title || !content) return res.status(400).json({ error: "Title and content are required" });
+
+    const newPost = { id: Date.now(), title, content, comments: [] };
+    posts.unshift(newPost); // Adds new post to the top
+    res.status(201).json(newPost);
+});
+
+// 3. POST: Add a comment to a specific post
+app.post('/api/posts/:id/comments', (req, res) => {
+    const { id } = req.params;
+    const { comment } = req.body;
+    if (!comment) return res.status(400).json({ error: "Comment text cannot be empty" });
+
+    const post = posts.find(p => p.id == id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    post.comments.push(comment);
+    res.status(201).json(post);
+});
+
+app.listen(PORT, () => console.log(`Blog API running on port ${PORT}`));
+
